@@ -1,16 +1,7 @@
-# Author: Hector DeJesus
-# Date: May 19, 2024
-# Simple Session Example using Flask, PyMongo, and flask_session.
-# Created as a simple session building block.
-# Tested and working fine with the current requirements.txt.
-# The session ID only changes if there is no other session ID. 
-# User must logout and login to change the session ID.
-# If there is no logged in user, the session is empty.
-
 from flask import Flask, session, redirect, url_for, request, render_template_string, g
 from flask_session import Session
 from pymongo import MongoClient
-import os
+from datetime import timedelta  # Import the timedelta module
 from custom_session_interface import CustomSessionInterface  # Import the custom session interface
 
 app = Flask(__name__)
@@ -18,10 +9,13 @@ app = Flask(__name__)
 # Configure the secret key for session management
 app.config['SECRET_KEY'] = 'supersecretkey'
 
+# Configure session lifetime
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+
 # Configure the session to use MongoDB
 app.config['SESSION_TYPE'] = 'mongodb'
 app.config['SESSION_PERMANENT'] = False
-app.config["SESSION_MONGODB"] = MongoClient('mongodb://localhost:27017/')
+app.config['SESSION_MONGODB'] = MongoClient('mongodb://localhost:27017/')
 app.config['SESSION_MONGODB_DB'] = 'mySessionDB'
 app.config['SESSION_MONGODB_COLLECT'] = 'sessions'
 app.config['SESSION_COOKIE_NAME'] = 'simple-user-session'
@@ -29,8 +23,8 @@ app.config['SESSION_COOKIE_NAME'] = 'simple-user-session'
 # Create a custom session interface instance
 app.session_interface = CustomSessionInterface(
     uri='mongodb://localhost:27017/',
-    db='mySessionDB',  # Corrected to match the configuration
-    collection='sessions'
+    db=app.config['SESSION_MONGODB_DB'],
+    collection=app.config['SESSION_MONGODB_COLLECT']
 )
 
 # Initialize the session with the app
@@ -68,14 +62,24 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        # Clear the existing session data
-        session.clear()
+        # Check if a user is already logged in
+        if 'username' in session:
+            # Print the current logged-in username
+            print(f"Current logged-in user: {session['username']}")
+            # Clear the existing session data
+            session.clear()
+            # Mark the session as modified to reset the session ID
+            session.modified = True
+                
         # Set the 'username' in the session
         session['username'] = request.form['username']
-        # Mark the session as modified to reset the session ID
+        # Mark the session as modified to ensure a new session ID is generated
         session.modified = True
-        # Debug print to show the new session ID after login
-        print(f"New session ID after login: {request.cookies.get(app.config['SESSION_COOKIE_NAME'])}")
+        
+        # Print the new session ID after login
+        print(f"New logged-in user: {session['username']}")
+        print(f"New session ID after login: {session.sid}")
+        
         return redirect(url_for('index'))
     # Render the login page template
     return render_template_string(login_page)
