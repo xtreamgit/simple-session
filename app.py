@@ -62,23 +62,26 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        # Check if a user is already logged in
+        # Check if there is a session ID assigned
         if 'username' in session:
             # Print the current logged-in username
             print(f"Current logged-in user: {session['username']}")
             # Clear the existing session data
             session.clear()
-            # Mark the session as modified to reset the session ID
-            session.modified = True
-                
+            # Invalidate the session ID
+            response = redirect(url_for('login'))
+            response.delete_cookie(app.config['SESSION_COOKIE_NAME'])
+            print("Previous user logged out and session invalidated")
+            return response
+
         # Set the 'username' in the session
         session['username'] = request.form['username']
         # Mark the session as modified to ensure a new session ID is generated
         session.modified = True
         
-        # Print the new session ID after login
+        # Print the new logged-in user and session ID after login
         print(f"New logged-in user: {session['username']}")
-        print(f"New session ID after login: {session.sid}")
+        print(f"New session ID after login: {session.sid if session.sid else 'None'}")
         
         return redirect(url_for('index'))
     # Render the login page template
