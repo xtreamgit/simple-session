@@ -87,6 +87,7 @@ def login():
     # Render the login page template
     return render_template_string(login_page)
 
+
 @app.route('/logout')
 def logout():
     # Clear the session data

@@ -39,6 +39,9 @@ class CustomSessionInterface(SessionInterface):
 
         response.set_cookie(app.config['SESSION_COOKIE_NAME'], store_id, expires=expires)
 
+    def _delete_session(self, session_id):
+        self.store.delete_one({'id': session_id})
+
 class Session(dict, SessionMixin):
     def __init__(self, initial=None, sid=None):
         super().__init__(initial or {})
