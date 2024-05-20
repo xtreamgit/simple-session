@@ -11,6 +11,7 @@ from flask import Flask, session, redirect, url_for, request, render_template_st
 from flask_session import Session
 from pymongo import MongoClient
 import os
+from datetime import timedelta
 from custom_session_interface import CustomSessionInterface  # Import the custom session interface
 
 app = Flask(__name__)
@@ -25,6 +26,7 @@ app.config["SESSION_MONGODB"] = MongoClient('mongodb://localhost:27017/')
 app.config['SESSION_MONGODB_DB'] = 'mySessionDB'
 app.config['SESSION_MONGODB_COLLECT'] = 'sessions'
 app.config['SESSION_COOKIE_NAME'] = 'simple-user-session'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=1)  # Set session expiration to 2 minutes
 
 # Create a custom session interface instance
 app.session_interface = CustomSessionInterface(
